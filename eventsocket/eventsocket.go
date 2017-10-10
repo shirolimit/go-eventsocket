@@ -224,17 +224,17 @@ func (h *Connection) readOne() bool {
 		}
 		// capitalize header keys for consistency.
 		for k, v := range tmp {
-			resp.Header[capitalize(k)] = v
+			resp.Header[strings.ToLower(k)] = v
 		}
 		if v, _ := resp.Header["_body"]; v != nil {
-                        switch vv := v.(type) {
-                        case string:
-                            resp.Body = vv
-                        case int:
-                            resp.Body = string(vv)
-                        default:
-                            resp.Body = ""
-                        }
+			switch vv := v.(type) {
+			case string:
+				resp.Body = vv
+			case int:
+				resp.Body = string(vv)
+			default:
+				resp.Body = ""
+			}
 			delete(resp.Header, "_body")
 		} else {
 			resp.Body = ""
@@ -286,7 +286,7 @@ func (h *Connection) ReadEvent() (*Event, error) {
 func copyHeaders(src *textproto.MIMEHeader, dst *Event, decode bool) {
 	var err error
 	for k, v := range *src {
-		k = capitalize(k)
+		k = strings.ToLower(k)
 		if decode {
 			dst.Header[k], err = url.QueryUnescape(v[0])
 			if err != nil {
@@ -296,33 +296,6 @@ func copyHeaders(src *textproto.MIMEHeader, dst *Event, decode bool) {
 			dst.Header[k] = v[0]
 		}
 	}
-}
-
-// capitalize capitalizes strings in a very particular manner.
-// Headers such as Job-UUID become Job-Uuid and so on. Headers starting with
-// Variable_ only replace ^v with V, and headers staring with _ are ignored.
-func capitalize(s string) string {
-	if s[0] == '_' {
-		return s
-	}
-	ns := bytes.ToLower([]byte(s))
-	if len(s) > 9 && s[1:9] == "ariable_" {
-		ns[0] = 'V'
-		return string(ns)
-	}
-	toUpper := true
-	for n, c := range ns {
-		if toUpper {
-			if 'a' <= c && c <= 'z' {
-				c -= 'a' - 'A'
-			}
-			ns[n] = c
-			toUpper = false
-		} else if c == '-' || c == '_' {
-			toUpper = true
-		}
-	}
-	return string(ns)
 }
 
 // Send sends a single command to the server and returns a response Event.
@@ -468,7 +441,7 @@ func (r *Event) String() string {
 
 // Get returns an Event value, or "" if the key doesn't exist.
 func (r *Event) Get(key string) string {
-	return r.Header[key].(string)
+	return r.Header[strings.ToLower(key)].(string)
 }
 
 // GetInt returns an Event value converted to int, or an error if conversion
