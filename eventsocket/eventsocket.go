@@ -441,7 +441,10 @@ func (r *Event) String() string {
 
 // Get returns an Event value, or "" if the key doesn't exist.
 func (r *Event) Get(key string) string {
-	return r.Header[strings.ToLower(key)].(string)
+	if res, ok := r.Header[strings.ToLower(key)].(string); ok {
+		return res
+	}
+	return ""
 }
 
 // GetInt returns an Event value converted to int, or an error if conversion
